@@ -1,0 +1,15 @@
+# Core Cryptography & Security
+cryptography>=42.0.0
+argon2-cffi>=23.1.0
+
+# CLI and UI
+click>=8.1.7
+rich>=13.7.0
+
+# Data Validation & Serialization
+pydantic>=2.6.0
+
+# Testing & Dev
+pytest>=8.0.0
+pytest-cov>=4.1.0
+pyinstaller>=6.4.0

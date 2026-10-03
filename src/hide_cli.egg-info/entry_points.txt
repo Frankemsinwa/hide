@@ -1,0 +1,2 @@
+[console_scripts]
+hide = hide.cli:main
