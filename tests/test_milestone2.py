@@ -6,6 +6,7 @@ Tests for Milestone 2 (Phases 6–8):
 """
 
 import json
+import os
 from pathlib import Path
 import pytest
 from click.testing import CliRunner
@@ -152,8 +153,36 @@ def test_tamper_detection_in_object_store(tmp_path: Path):
             verify_vault_integrity(target_vault, meta.vault_id, master_key)
 
 
-def test_cli_list_empty():
+def test_cli_list_empty(monkeypatch, tmp_path: Path):
+    empty_reg_file = tmp_path / "empty_registry.json"
+    monkeypatch.setattr("hide.cli.VaultRegistry", lambda: VaultRegistry(empty_reg_file))
     runner = CliRunner()
     result = runner.invoke(cli, ["list"])
     assert result.exit_code == 0
     assert "No vaults registered" in result.output
+
+
+def test_pack_large_multi_chunk_file(tmp_path: Path):
+    # Tests a 200 KiB file (spanning multiple 64 KiB chunks) to ensure
+    # that streaming hashing has no off-by-one or rewind artifacts
+    source_dir = tmp_path / "LargeFileDir"
+    source_dir.mkdir()
+    large_payload = os.urandom(200 * 1024)
+    (source_dir / "large.bin").write_bytes(large_payload)
+
+    target_vault = tmp_path / "LargeFile.hide"
+    registry = VaultRegistry(tmp_path / "registry.json")
+    password = "pw"
+
+    meta = pack_directory(
+        source_dir=source_dir,
+        target_vault_dir=target_vault,
+        vault_name="LargeFile",
+        password=password,
+        delete_original=False,
+        registry=registry,
+    )
+
+    # Verification must pass with exact SHA256 match
+    with derive_key(password, meta.kdf) as master_key:
+        assert verify_vault_integrity(target_vault, meta.vault_id, master_key) is True

@@ -260,6 +260,7 @@ def pack_directory(
         vault_id=metadata.vault_id,
         version=1,
         updated_at=time.time(),
+        original_path=str(source_dir),
     )
 
     objects_dir = target_vault_dir / OBJECTS_DIRNAME
@@ -326,7 +327,7 @@ def pack_directory(
 
         # Step 7: Safe Deletion of original source files
         if delete_original:
-            secure_wipe_directory(source_dir, delete_root=False)
+            secure_wipe_directory(source_dir, delete_root=True)
 
         # Step 8: Finalize lock state -> CLOSED
         remove_vault_lock(target_vault_dir)

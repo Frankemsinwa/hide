@@ -200,33 +200,37 @@ def encrypt_stream(
     chunk_index = 0
     total_bytes = 0
 
-    while True:
-        chunk = in_stream.read(chunk_size)
-        total_bytes += len(chunk)
-        
-        # Peek to see if this is the final chunk
-        next_byte = in_stream.read(1)
-        is_final = len(next_byte) == 0
-        if not is_final:
-            in_stream.seek(-1, os.SEEK_CUR)
+    curr_chunk = in_stream.read(chunk_size)
+    if not curr_chunk:
+        # Empty stream (0 bytes): write a single final chunk with 0 bytes
+        chunk_nonce = _derive_chunk_nonce(base_nonce, 0)
+        chunk_aad = (associated_data or b"") + struct.pack(">IB", 0, 1)
+        ct_with_tag = aesgcm.encrypt(chunk_nonce, b"", chunk_aad)
+        ciphertext = ct_with_tag[:-GCM_TAG_SIZE_BYTES]
+        tag = ct_with_tag[-GCM_TAG_SIZE_BYTES:]
+        out_stream.write(struct.pack(">IB", len(ciphertext), 1))
+        out_stream.write(tag)
+        out_stream.write(ciphertext)
+        return 0
+
+    while curr_chunk:
+        total_bytes += len(curr_chunk)
+        next_chunk = in_stream.read(chunk_size)
+        is_final = len(next_chunk) == 0
 
         chunk_nonce = _derive_chunk_nonce(base_nonce, chunk_index)
-        
-        # Associated data includes vault AAD + chunk_index + is_final flag to prevent chunk reordering
         chunk_aad = (associated_data or b"") + struct.pack(">IB", chunk_index, 1 if is_final else 0)
-        
-        ct_with_tag = aesgcm.encrypt(chunk_nonce, chunk, chunk_aad)
+
+        ct_with_tag = aesgcm.encrypt(chunk_nonce, curr_chunk, chunk_aad)
         ciphertext = ct_with_tag[:-GCM_TAG_SIZE_BYTES]
         tag = ct_with_tag[-GCM_TAG_SIZE_BYTES:]
 
-        # Write Chunk Header & Data
         out_stream.write(struct.pack(">IB", len(ciphertext), 1 if is_final else 0))
         out_stream.write(tag)
         out_stream.write(ciphertext)
 
         chunk_index += 1
-        if is_final:
-            break
+        curr_chunk = next_chunk
 
     return total_bytes
 

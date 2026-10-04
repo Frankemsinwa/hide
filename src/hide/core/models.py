@@ -144,6 +144,7 @@ class VaultManifest:
     vault_id: str
     version: int
     updated_at: float
+    original_path: str = ""
     entries: Dict[str, ManifestEntry] = field(default_factory=dict)
 
     def add_entry(self, entry: ManifestEntry) -> None:
@@ -163,6 +164,7 @@ class VaultManifest:
             "vault_id": self.vault_id,
             "version": self.version,
             "updated_at": self.updated_at,
+            "original_path": self.original_path,
             "entries": {k: v.to_dict() for k, v in self.entries.items()},
         }
 
@@ -176,6 +178,7 @@ class VaultManifest:
             vault_id=data["vault_id"],
             version=data["version"],
             updated_at=data["updated_at"],
+            original_path=data.get("original_path", ""),
             entries=entries,
         )
 

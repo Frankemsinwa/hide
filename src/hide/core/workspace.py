@@ -174,6 +174,12 @@ def open_vault_workspace(
         # Workspace destination
         if target_workspace:
             workspace_dir = target_workspace.resolve()
+        elif manifest.original_path:
+            orig = Path(manifest.original_path)
+            if not orig.exists() or (orig.is_dir() and not any(orig.iterdir())):
+                workspace_dir = orig.resolve()
+            else:
+                workspace_dir = get_default_workspaces_dir() / f"{metadata.vault_name}_{metadata.vault_id[:8]}"
         else:
             workspace_dir = get_default_workspaces_dir() / f"{metadata.vault_name}_{metadata.vault_id[:8]}"
 

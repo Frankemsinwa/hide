@@ -12,6 +12,19 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Reconfigure console streams on Windows to UTF-8 with replacement fallback
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -43,7 +56,7 @@ from hide.core.workspace import (
     get_default_workspaces_dir,
 )
 
-console = Console()
+console = Console(highlight=False)
 
 
 def prompt_password(confirm: bool = False, prompt_text: str = "Password: ") -> str:
