@@ -10,7 +10,3 @@
 - **In-Place Folder Encryption**: Run `hide .` inside any directory to pack and encrypt it.
 - **Secure Temporary Workspace**: Decrypts into an isolated staging directory; re-encrypts changes and wipes the staging workspace on `hide close`.
 - **Emergency Lockdown**: `hide panic` instantly unmounts and wipes all open workspaces across your workstation.
-
-## Architecture
-
-See [docs/implementation_plan.md](docs/implementation_plan.md) and [docs/hide.md](docs/hide.md) for full architectural specifications.
